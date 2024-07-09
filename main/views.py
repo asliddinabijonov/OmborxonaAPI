@@ -1,3 +1,4 @@
+from drf_yasg import openapi
 from rest_framework.generics import *
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import IsAuthenticated
@@ -5,7 +6,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import *
 from .models import Mahsulot
-
 
 
 class MahsulotlarListCreateAPIView(ListCreateAPIView):
@@ -19,6 +19,29 @@ class MahsulotlarListCreateAPIView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(tarqatuvchi=self.request.user)
+
+
+class MahsulotlarAPIView(APIView):
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='olchov',
+                description='Filter olchov',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=['kg', 'dona', 'qop']
+            )
+        ]
+    )
+    def get(self, request):
+        filter_olchov = request.query_params.get('olchov', None)
+        mahsulotlar = Mahsulot.objects.all()
+
+        if filter_olchov is not None:
+            mahsulotlar = mahsulotlar.filter(olchov=filter_olchov)
+        serializer = MahsulotPostListSerializer(mahsulotlar, many=True)
+        return Response(serializer.data)
 
 
 class MahsulotRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
